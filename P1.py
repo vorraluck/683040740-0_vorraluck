@@ -11,7 +11,6 @@ c1.greet()
 
 
 print(f"Cat 2 Date Out (Original): {c2.date_out}")
-# บวกเวลาเพิ่มไปอีก 2 วัน
 c2.date_out = c2.date_out + timedelta(days=2)
 print(f"Cat 2 Date Out (Updated): {c2.date_out}")
 
@@ -28,6 +27,7 @@ print(f"Total number of cats: {Cat.count}")
 
 Cat.count = 0
 print("Resetting cat count...")
+
 
 
 print(f"Total number of cats after reset: {Cat.count}")

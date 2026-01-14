@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 """
 Vorraluck Taladon
 683040740-0
@@ -174,7 +174,7 @@ class VideoGame:
             return "God"
         else:
             return "Legends never die"
-=======
+
 """
 Vorraluck Taladon
 683040740-0

@@ -33,9 +33,8 @@ class Bedroom(Room):
     def get_recommended_lighting(self):
         return 15
 
-
 class Kitchen(Room):
-    def __init__(self, length, width, has_island=True):  
+    def __init__(self, length, width, has_island=True):
         super().__init__(length, width)
         self.has_island = has_island
 
@@ -46,6 +45,13 @@ class Kitchen(Room):
         return 35
 
     def calculate_counter_space(self):
+        """
+        Docstring for calculate_counter_space
+        
+        :param self: calculate counter space based on room area and island presence
+        :param return: returns counter space areas
+        :return: A tuple (island_counter_area, wall_counter_area)
+        """
         area = self.calculate_area()
 
         if self.has_island:
@@ -56,3 +62,5 @@ class Kitchen(Room):
             wall_counter = area / 2          # 1/2 of room area
 
         return island_counter, wall_counter
+
+    

@@ -30,3 +30,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print(Kitchen.calculate_counter_space.__doc__)

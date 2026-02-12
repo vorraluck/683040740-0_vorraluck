@@ -1,46 +1,31 @@
-<<<<<<< Updated upstream
 from datetime import datetime
-
 class Cat:
-    
-    count = 0
+    total_cats = 0   # class variable
 
-    def __init__(self, name, age, owner):
+    def __init__(self, name, owner, age):
         self.name = name
-        self.age = age
         self.owner = owner
-        self.date_in = datetime.now()  
-        self.date_out = datetime.now() 
-        Cat.count += 1
+        self.age = age
+        self.date_in = datetime.now()
+        self.date_out = None
+        Cat.total_cats += 1
 
     def greet(self):
-        print(f"Meow! My name is {self.name}. Nice to meet you!")
+        print(f"Meow! I'm {self.name} 🐱")
 
-    def show_info(self):
-        print(f"Cat: {self.name} | Age: {self.age} | Owner: {self.owner}")
-        print(f"Check-in: {self.date_in.strftime('%Y-%m-%d %H:%M')}")
-        print(f"Check-out: {self.date_out.strftime('%Y-%m-%d %H:%M')}")
-=======
-from datetime import datetime
+    def show_details(self):
+        print("----- Cat Details -----")
+        print(f"Name     : {self.name}")
+        print(f"Owner    : {self.owner}")
+        print(f"Age      : {self.age}")
+        print(f"Date in  : {self.date_in}")
+        print(f"Date out : {self.date_out}")
+        print("-----------------------")
 
-class Cat:
-    
-    count = 0
+    @classmethod
+    def get_total_cats(cls):
+        return cls.total_cats
 
-    def __init__(self, name, age, owner):
-        self.name = name
-        self.age = age
-        self.owner = owner
-        self.date_in = datetime.now()  
-        self.date_out = datetime.now() 
-        Cat.count += 1
-
-    def greet(self):
-        print(f"Meow! My name is {self.name}. Nice to meet you!")
-
-    def show_info(self):
-        print(f"Cat: {self.name} | Age: {self.age} | Owner: {self.owner}")
-        print(f"Check-in: {self.date_in.strftime('%Y-%m-%d %H:%M')}")
-        print(f"Check-out: {self.date_out.strftime('%Y-%m-%d %H:%M')}")
->>>>>>> Stashed changes
-        print("-" * 30)
+    @classmethod
+    def reset_total_cats(cls):
+        cls.total_cats = 0

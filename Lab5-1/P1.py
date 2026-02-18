@@ -1,6 +1,3 @@
-# Name: Your Name
-# Student ID: 12345678
-
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit,

@@ -1,40 +1,134 @@
 import sys
 from PySide6.QtWidgets import (QApplication, QMainWindow,
-                             QVBoxLayout, QHBoxLayout, QFormLayout, QGridLayout, QWidget, QLabel, QLineEdit)
-from PySide6.QtWidgets import QPushButton, QComboBox
+                               QVBoxLayout, QGridLayout,
+                               QWidget, QLabel, QLineEdit,
+                               QPushButton, QComboBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 kg = "kilograms"
 lb = "pounds"
 cm = "centimeters"
-m = "meters"
-ft = "feet"
+inch = "inches"
+
 adult = "Adults 20+"
 child = "Children and Teenagers (5-19)"
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        owTitle("P1: BMI Calself.setWindculator")
-        self.setGeometry(100, 100, 300, 450)
+        self.setWindowTitle("P1: BMI Calculator")
+        self.setGeometry(100, 100, 450, 520)
 
-        # Create central widget and layout
-        
+        central_widget = QWidget()
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)   # 🔥 เอาช่องว่างรอบนอกออก
+        main_layout.setSpacing(0)
 
-        # Create an input section object
-        input_section = InputSection()
-        
-        # create an output section object
-        output_section = OutputSection()
+        # ===== Header (บางลง + ชิดขอบ) =====
+        header = QLabel("Adult and Child BMI Calculator")
+        header.setAlignment(Qt.AlignCenter)
+        header.setStyleSheet("""
+            background-color: #8B0000;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 2px;
+        """)
+        header.setFixedHeight(32)   # 🔥 ลดความหนาแถบแดง
+
+        # ===== Sections =====
+        self.input_section = InputSection()
+        self.output_section = OutputSection()
 
         result_container = QWidget()
-        result_container.setStyleSheet("background-color: #FAF0E6;")  # Linen color
-        result_container.setLayout(output_section)
+        result_container.setStyleSheet("background-color: #FAF0E6;")
+        result_layout = QVBoxLayout()
+        result_layout.setContentsMargins(0, 0, 0, 0)
+        result_layout.addWidget(self.output_section)
+        result_container.setLayout(result_layout)
 
-        # connect signals from clicking submit and clear buttons
-        
+        main_layout.addWidget(header)
+        main_layout.addWidget(self.input_section)
+        main_layout.addWidget(result_container)
+
+        central_widget.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
+
+        # Connect buttons
+        self.input_section.submit_btn.clicked.connect(
+            lambda: self.input_section.submit_reg(self.output_section)
+        )
+        self.input_section.clear_btn.clicked.connect(
+            lambda: self.input_section.clear_form(self.output_section)
+        )
+
+
+class InputSection(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        layout = QGridLayout()
+        layout.setContentsMargins(20, 15, 20, 15)
+
+        layout.addWidget(QLabel("BMI age group:"), 0, 0)
+        self.age_combo = QComboBox()
+        self.age_combo.addItems([adult, child])
+        layout.addWidget(self.age_combo, 0, 1, 1, 2)
+
+        layout.addWidget(QLabel("Weight:"), 1, 0)
+        self.weight_input = QLineEdit()
+        layout.addWidget(self.weight_input, 1, 1)
+
+        self.weight_unit = QComboBox()
+        self.weight_unit.addItems([kg, lb])
+        layout.addWidget(self.weight_unit, 1, 2)
+
+        layout.addWidget(QLabel("Height:"), 2, 0)
+        self.height_input = QLineEdit()
+        layout.addWidget(self.height_input, 2, 1)
+
+        self.height_unit = QComboBox()
+        self.height_unit.addItems([cm, inch])
+        layout.addWidget(self.height_unit, 2, 2)
+
+        self.clear_btn = QPushButton("Clear")
+        self.submit_btn = QPushButton("Submit Registration")
+
+        layout.addWidget(self.clear_btn, 3, 1)
+        layout.addWidget(self.submit_btn, 3, 2)
+
+        self.setLayout(layout)
+
+    def clear_form(self, output_section):
+        self.weight_input.clear()
+        self.height_input.clear()
+        output_section.clear_result()
+
+    def submit_reg(self, output_section):
+        bmi = self.calculate_BMI()
+        if bmi is not None:
+            output_section.update_results(bmi, self.age_combo.currentText())
+
+    def calculate_BMI(self):
+        try:
+            weight = float(self.weight_input.text())
+            height = float(self.height_input.text())
+
+            if self.weight_unit.currentText() == lb:
+                weight *= 0.453592
+
+            if self.height_unit.currentText() == inch:
+                height *= 2.54
+
+            height_m = height / 100
+            bmi = weight / (height_m ** 2)
+
+            return round(bmi, 2)
+        except:
+            return None
 
 
 class OutputSection(QWidget):
@@ -42,72 +136,83 @@ class OutputSection(QWidget):
         super().__init__()
 
         self.layout = QVBoxLayout()
+        self.layout.setAlignment(Qt.AlignTop)
+        self.layout.setContentsMargins(20, 20, 20, 20)
 
+        self.result_title = QLabel("Your BMI")
+        self.result_title.setAlignment(Qt.AlignCenter)
+
+        self.result_label = QLabel("0.00")
+        self.result_label.setFont(QFont("Arial", 30, QFont.Bold))
+        self.result_label.setStyleSheet("color: blue;")
+        self.result_label.setAlignment(Qt.AlignCenter)
+
+        self.layout.addWidget(self.result_title)
+        self.layout.addWidget(self.result_label)
+        self.layout.addSpacing(20)
+
+        self.setLayout(self.layout)
 
     def show_adult_table(self):
-        table_layout = QGridLayout()
-        label = QLabel("BMI")
-        label.setFont(QFont("Arial", 10, QFont.Bold))
-        table_layout.addWidget(label, 0, 0, Qt.AlignCenter)
-        label = QLabel("Condition")
-        label.setFont(QFont("Arial", 10, QFont.Bold))
-        table_layout.addWidget(label, 0, 1)
-        
-        self.addLayout(table_layout)
+        table = QLabel(
+            "BMI\t\tCondition\n"
+            "< 18.5\t\tThin\n"
+            "18.5 - 25.0\tNormal\n"
+            "25.1 - 30.0\tOverweight\n"
+            "> 30.0\t\tObese"
+        )
+        table.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(table)
 
     def show_child_link(self):
-        
-        link_layout = QHBoxLayout()
-        boy_link = QLabel('<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-boys-z-5-19years.pdf?sfvrsn=4007e921_4">BMI graph for BOYS</a>')
-        girl_link = QLabel('<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-girls-z-5-19years.pdf?sfvrsn=c708a56b_4">BMI graph for GIRLS</a>')
+        info = QLabel(
+            "For child's BMI interpretation, please click one of the following links."
+        )
+        info.setAlignment(Qt.AlignCenter)
+
+        boy_link = QLabel(
+            '<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-boys-z-5-19years.pdf">BMI graph for BOYS</a>'
+        )
+
+        girl_link = QLabel(
+            '<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-girls-z-5-19years.pdf">BMI graph for GIRLS</a>'
+        )
+
         boy_link.setOpenExternalLinks(True)
         girl_link.setOpenExternalLinks(True)
-        
+
+        boy_link.setAlignment(Qt.AlignCenter)
+        girl_link.setAlignment(Qt.AlignCenter)
+
+        self.layout.addWidget(info)
+        self.layout.addSpacing(5)
+        self.layout.addWidget(boy_link)
+        self.layout.addWidget(girl_link)
 
     def update_results(self, bmi, age_group):
-        pass
-    
+        self.clear_result()
+        self.result_label.setText(f"{bmi:.2f}")
+
+        if age_group == adult:
+            self.show_adult_table()
+        else:
+            self.show_child_link()
+
     def clear_result(self):
-        
-        while self.count() > 3:
-            item = self.takeAt(3)
+        while self.layout.count() > 3:
+            item = self.layout.takeAt(3)
             if item.widget():
                 item.widget().deleteLater()
-            elif item.layout():
-                self.clear_layout(item.layout())
-    
-    def clear_layout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
-                self.clear_layout(item.layout())
 
-class InputSection(QWidget):
+        self.result_label.setText("0.00")
 
-    def __init__(self):
-        super().__init__()
-
-        
-
-    def clear_form(self, output_section):
-        # clear input form
-
-        # clear output section
-        output_section.clear_result()
-
-    def submit_reg(self, output_section):
-        pass
-
-    def calculate_BMI(self):
-        pass
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

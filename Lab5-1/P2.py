@@ -1,85 +1,72 @@
 import sys
-from PySide6.QtWidgets import (
-    QApplication, QWidget, QLabel, QLineEdit,
-    QPushButton, QVBoxLayout, QHBoxLayout,
-    QComboBox, QTextEdit, QRadioButton,
-    QButtonGroup, QDateEdit, QCheckBox
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QLabel, QLineEdit, QTextEdit,
+    QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
+    QRadioButton, QButtonGroup, QDateEdit
 )
-from PySide6.QtCore import QDate, QLocale, Qt
+from PyQt5.QtCore import QDate
 
-class StudentRegistration(QWidget):
 
+class RegistrationForm(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("P2: Student Registration")
+
+        self.setWindowTitle("Registration Form")
         self.setFixedSize(400, 600)
-        main_layout = QVBoxLayout()
 
-        # --Title--
-        title = QLabel("Student Registration Form")
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("font-size:18px; font-weight:bold;")
-        main_layout.addWidget(title)
-        main_layout.addSpacing(10)
+        layout = QVBoxLayout()
 
-        #--Full Name--
-        main_layout.addWidget(QLabel("Full Name:"))
-        main_layout.addWidget(QLineEdit())
-        main_layout.addSpacing(5)
+        # ===== Full Name =====
+        name_label = QLabel("Full Name:")
+        self.name_input = QLineEdit()
 
-        #--Email--
-        main_layout.addWidget(QLabel("Email:"))
-        main_layout.addWidget(QLineEdit())
-        main_layout.addSpacing(5)
+        layout.addWidget(name_label)
+        layout.addWidget(self.name_input)
+        layout.addSpacing(15)
 
-        #--Phone--
-        main_layout.addWidget(QLabel("Phone:"))
-        main_layout.addWidget(QLineEdit())
-        main_layout.addSpacing(5)
+        # ===== Email =====
+        email_label = QLabel("Email:")
+        self.email_input = QLineEdit()
 
-        #--Date of Birth--
-        main_layout.addWidget(QLabel("Date of Birth (dd/MM/yyyy):"))
-        date_edit = QDateEdit()
-        date_edit.setCalendarPopup(True)
-        date_edit.setDisplayFormat("M/dd/yy")  # Format like "2/19/00"
-        date_edit.setDate(QDate(2000,1,1))  # Set default date
-        date_edit.setFixedWidth(200)
-        
-        #--arabic--
-        date_edit.setLocale(QLocale.c())
-        date_edit.setDisplayFormat("dd/MM/yyyy")
-        date_edit.setDate(QDate(2000, 1, 1))
-    
-        main_layout.addWidget(date_edit)
-        main_layout.addSpacing(5)
+        layout.addWidget(email_label)
+        layout.addWidget(self.email_input)
+        layout.addSpacing(15)
 
-        #--Gender--
-        main_layout.addWidget(QLabel("Gender:"))
+        # ===== Gender =====
+        gender_label = QLabel("Gender:")
+        layout.addWidget(gender_label)
+
+        self.gender_group = QButtonGroup()
+
         gender_layout = QHBoxLayout()
+        self.male_radio = QRadioButton("Male")
+        self.female_radio = QRadioButton("Female")
 
-        gender_group = QButtonGroup(self)
-        male = QRadioButton("Male")
-        female = QRadioButton("Female")
-        non_binary = QRadioButton("Non-binary")
-        nottosay = QRadioButton("Prefer not to say")
+        self.gender_group.addButton(self.male_radio)
+        self.gender_group.addButton(self.female_radio)
 
-        gender_group.addButton(male)
-        gender_group.addButton(female)
-        gender_group.addButton(non_binary)
-        gender_group.addButton(nottosay)
+        gender_layout.addWidget(self.male_radio)
+        gender_layout.addWidget(self.female_radio)
 
-        gender_layout.addWidget(male)
-        gender_layout.addWidget(female)
-        gender_layout.addWidget(non_binary)
-        gender_layout.addWidget(nottosay)
+        layout.addLayout(gender_layout)
+        layout.addSpacing(15)
 
-        main_layout.addLayout(gender_layout)
-        main_layout.addSpacing(20)
+        # ===== Date of Birth =====
+        dob_label = QLabel("Date of Birth:")
+        self.date_edit = QDateEdit()
+        self.date_edit.setCalendarPopup(True)
+        self.date_edit.setDisplayFormat("M/dd/yy")
+        self.date_edit.setDate(QDate(2000, 1, 1))  # January 1, 2000
 
-        #--Program--
-        main_layout.addWidget(QLabel("Select Your Program:"))
-        program_combo = QComboBox()
-        program_combo.addItems([
+        layout.addWidget(dob_label)
+        layout.addWidget(self.date_edit)
+        layout.addSpacing(15)
+
+        # ===== Program =====
+        program_label = QLabel("Program:")
+        self.program_combo = QComboBox()
+
+        programs = [
             "Computer Engineering",
             "Digital Media Engineering",
             "Environmental Engineering",
@@ -94,32 +81,32 @@ class StudentRegistration(QWidget):
             "Agricultural Engineering",
             "Civil Engineering",
             "ARIS"
-        ])
-        main_layout.addWidget(program_combo)
-        main_layout.addSpacing(5)
+        ]
 
-        # About yourself
-        main_layout.addWidget(QLabel("Tell us a little bit about yourself:"))
-        about = QTextEdit()
-        about.setFixedHeight(40)
-        main_layout.addWidget(about)
-        main_layout.addSpacing(5)
+        self.program_combo.addItems(programs)
 
-        # Terms
-        main_layout.addWidget(QCheckBox("I accept the terms and conditions."))
-        main_layout.addSpacing(5)
-        # Submit button
-        submit_btn = QPushButton("Submit Registration")
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
-        btn_layout.addWidget(submit_btn)
-        btn_layout.addStretch()
-        main_layout.addLayout(btn_layout)
+        layout.addWidget(program_label)
+        layout.addWidget(self.program_combo)
+        layout.addSpacing(15)
 
-        self.setLayout(main_layout)
+        # ===== Address =====
+        address_label = QLabel("Address:")
+        self.address_text = QTextEdit()
+        self.address_text.setMaximumHeight(100)
+
+        layout.addWidget(address_label)
+        layout.addWidget(self.address_text)
+        layout.addSpacing(20)
+
+        # ===== Submit Button =====
+        self.submit_button = QPushButton("Submit")
+        layout.addWidget(self.submit_button)
+
+        self.setLayout(layout)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = StudentRegistration()
+    window = RegistrationForm()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())

@@ -1,3 +1,6 @@
+#Vorraluck Taladon
+#683040740-0
+
 import sys
 from PySide6.QtWidgets import (QApplication, QMainWindow,
                                QVBoxLayout, QGridLayout,

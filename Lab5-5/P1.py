@@ -1,5 +1,5 @@
-# Name: [Your Name]
-# Student ID: [Your ID]
+#Vorraluck Taladon
+#683040740-0
 
 import sys
 from PySide6.QtWidgets import (

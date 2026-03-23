@@ -11,59 +11,75 @@ class RegistrationForm(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Registration Form")
-        self.setFixedSize(400, 600)
+        self.setWindowTitle("P2: Student Registration")
+        self.setFixedSize(500, 750)
 
         layout = QVBoxLayout()
 
-        # ===== Full Name =====
+        #Full name
         name_label = QLabel("Full Name:")
         self.name_input = QLineEdit()
 
         layout.addWidget(name_label)
         layout.addWidget(self.name_input)
-        layout.addSpacing(15)
+        layout.addSpacing(20)
 
-        # ===== Email =====
-        email_label = QLabel("Email:")
+        #Email
+        email_label = QLabel("Email: ")
         self.email_input = QLineEdit()
 
         layout.addWidget(email_label)
         layout.addWidget(self.email_input)
-        layout.addSpacing(15)
+        layout.addSpacing(20)
 
-        # ===== Gender =====
-        gender_label = QLabel("Gender:")
+        #phone number
+        phone_label = QLabel("Phone: ")
+        self.phone_input = QLineEdit()
+
+        layout.addWidget(phone_label)
+        layout.addWidget(self.phone_input)
+        layout.addSpacing(20)
+
+        #Date of Birth(dd//MM/yyyy)
+        day_label = QLabel("Date of Birth: ")
+        layout.addWidget(day_label) 
+        layout.addSpacing(20)
+
+        # Create calendar field
+        date_edit = QDateEdit()
+        date_edit.setCalendarPopup(True)  # Shows calendar dropdown
+        date_edit.setDisplayFormat("M/dd/yy")  # Format like "2/19/00"
+        date_edit.setDate(QDate(2000, 2, 19))  # Set default date
+        layout.addWidget(date_edit)
+
+        #Gender
+        gender_label = QLabel("Gender: ")
         layout.addWidget(gender_label)
 
+        # Button group ensures only one can be selected
         self.gender_group = QButtonGroup()
-
-        gender_layout = QHBoxLayout()
+        
         self.male_radio = QRadioButton("Male")
         self.female_radio = QRadioButton("Female")
+        self.nonbi_radio = QRadioButton("Non-Binary")
+        self.nottosay_radio = QRadioButton("Prefer not to say")
 
         self.gender_group.addButton(self.male_radio)
         self.gender_group.addButton(self.female_radio)
+        self.gender_group.addButton(self.nonbi_radio)
+        self.gender_group.addButton(self.nottosay_radio)
+        
+        radio_layout = QHBoxLayout()
+        radio_layout.addWidget(self.male_radio)
+        radio_layout.addWidget(self.female_radio)
+        radio_layout.addWidget(self.nonbi_radio)
+        radio_layout.addWidget(self.nottosay_radio)
 
-        gender_layout.addWidget(self.male_radio)
-        gender_layout.addWidget(self.female_radio)
+        layout.addLayout(radio_layout)
+        layout.addSpacing(20)
 
-        layout.addLayout(gender_layout)
-        layout.addSpacing(15)
-
-        # ===== Date of Birth =====
-        dob_label = QLabel("Date of Birth:")
-        self.date_edit = QDateEdit()
-        self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDisplayFormat("M/dd/yy")
-        self.date_edit.setDate(QDate(2000, 1, 1))  # January 1, 2000
-
-        layout.addWidget(dob_label)
-        layout.addWidget(self.date_edit)
-        layout.addSpacing(15)
-
-        # ===== Program =====
-        program_label = QLabel("Program:")
+        #program
+        program_label = QLabel("Program: ")
         self.program_combo = QComboBox()
 
         programs = [
@@ -84,24 +100,25 @@ class RegistrationForm(QWidget):
         ]
 
         self.program_combo.addItems(programs)
-
         layout.addWidget(program_label)
         layout.addWidget(self.program_combo)
-        layout.addSpacing(15)
-
-        # ===== Address =====
-        address_label = QLabel("Address:")
-        self.address_text = QTextEdit()
-        self.address_text.setMaximumHeight(100)
-
-        layout.addWidget(address_label)
-        layout.addWidget(self.address_text)
         layout.addSpacing(20)
 
-        # ===== Submit Button =====
+        # Submit button
         self.submit_button = QPushButton("Submit")
-        layout.addWidget(self.submit_button)
+        #Tell us
+        tell_label = QLabel("Tell us about yourself: ")
+        self.tell_input = QTextEdit()
+        self.tell_input.setFixedHeight(100)
 
+        layout.addWidget(tell_label)
+        layout.addWidget(self.tell_input)
+
+        layout.addStretch()  # ✅ แก้ตรงนี้
+
+        layout.addWidget(self.submit_button)
+        layout.addSpacing(20)
+        
         self.setLayout(layout)
 
 

@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLabel, QLineEdit, QTextEdit,
+    QApplication, QCheckBox, QWidget, QLabel, QLineEdit, QTextEdit,
     QPushButton, QVBoxLayout, QHBoxLayout, QComboBox,
     QRadioButton, QButtonGroup, QDateEdit
 )
@@ -114,7 +114,12 @@ class RegistrationForm(QWidget):
         layout.addWidget(tell_label)
         layout.addWidget(self.tell_input)
 
-        layout.addStretch()  # ✅ แก้ตรงนี้
+        # accept terms
+        self.terms_checkbox = QCheckBox("I accept the terms and conditions.")
+        layout.addWidget(self.terms_checkbox)
+        layout.addSpacing(20)
+
+        layout.addStretch()  
 
         layout.addWidget(self.submit_button)
         layout.addSpacing(20)

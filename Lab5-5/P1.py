@@ -74,7 +74,7 @@ class RoomCard(QWidget):
         """)
         self.select_btn.setStyleSheet("""
             QPushButton {
-                background-color: #22c55e;
+                background-color: #22c55e;s
                 color: white;
                 border: none;
                 border-radius: 6px;

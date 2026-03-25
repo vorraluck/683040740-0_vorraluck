@@ -2,220 +2,246 @@
 #683040740-0
 
 import sys
-from PySide6.QtWidgets import (QApplication, QMainWindow,
-                               QVBoxLayout, QGridLayout,
-                               QWidget, QLabel, QLineEdit,
-                               QPushButton, QComboBox)
+import math
+import re
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget,
+    QVBoxLayout, QGridLayout, QLabel, QPushButton
+)
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QCursor
 
-kg = "kilograms"
-lb = "pounds"
-cm = "centimeters"
-inch = "inches"
+C_BG      = "#F3F3F3"
+C_WHITE   = "#FFFFFF"
+C_BTN     = "#F9F9F9"
+C_BTN_HV  = "#E8E8E8"
+C_BTN_PR  = "#D0D0D0"
+C_TEXT    = "#1A1A1A"
+C_MUTED   = "#888888"
+C_BORDER  = "#DEDEDE"
 
-adult = "Adults 20+"
-child = "Children and Teenagers (5-19)"
+def fnt(size=13, bold=False):
+    f = QFont("Segoe UI", size)
+    if bold:
+        f.setWeight(QFont.Weight.Bold)
+    return f
 
+def center_window(win):
+    geo = QApplication.primaryScreen().availableGeometry()
+    win.move((geo.width() - win.width()) // 2, (geo.height() - win.height()) // 2)
 
-class MainWindow(QMainWindow):
+def make_btn(text):
+    btn = QPushButton(text)
+    btn.setFixedSize(72, 56)
+    btn.setFont(fnt(13))
+    btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+    btn.setStyleSheet(f"""
+        QPushButton {{
+            background: {C_BTN}; color: {C_TEXT};
+            border: 1px solid {C_BORDER}; border-radius: 4px;
+        }}
+        QPushButton:hover   {{ background: {C_BTN_HV}; }}
+        QPushButton:pressed {{ background: {C_BTN_PR}; }}
+    """)
+    return btn
+
+class Calculator(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Calculator")
+        self.setFixedSize(340, 540)
+        center_window(self)
+        self.setStyleSheet(f"background: {C_BG};")
+        self._expr = ""
+        self._just_evaluated = False
+        self._build_ui()
 
-        self.setWindowTitle("P1: BMI Calculator")
-        self.setGeometry(100, 100, 450, 520)
+    def _build_ui(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        root = QVBoxLayout(central)
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(0)
 
-        central_widget = QWidget()
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)   # 🔥 เอาช่องว่างรอบนอกออก
-        main_layout.setSpacing(0)
+        heading = QLabel("Standard")
+        heading.setFont(fnt(16, bold=True))
+        heading.setStyleSheet(f"color: {C_TEXT}; background: transparent;")
+        root.addWidget(heading)
+        root.addSpacing(8)
 
-        # ===== Header (บางลง + ชิดขอบ) =====
-        header = QLabel("Adult and Child BMI Calculator")
-        header.setAlignment(Qt.AlignCenter)
-        header.setStyleSheet("""
-            background-color: #8B0000;
-            color: white;
-            font-size: 15px;
-            font-weight: bold;
-            padding: 2px;
-        """)
-        header.setFixedHeight(32)   # 🔥 ลดความหนาแถบแดง
+        display = QWidget()
+        display.setStyleSheet(f"background: {C_WHITE}; border-radius: 6px;")
+        display.setFixedHeight(110)
+        d_lay = QVBoxLayout(display)
+        d_lay.setContentsMargins(12, 8, 12, 8)
+        d_lay.setSpacing(2)
 
-        # ===== Sections =====
-        self.input_section = InputSection()
-        self.output_section = OutputSection()
+        self.expr_lbl = QLabel("")
+        self.expr_lbl.setFont(fnt(14))
+        self.expr_lbl.setStyleSheet(f"color: {C_MUTED}; background: transparent;")
+        self.expr_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        result_container = QWidget()
-        result_container.setStyleSheet("background-color: #FAF0E6;")
-        result_layout = QVBoxLayout()
-        result_layout.setContentsMargins(0, 0, 0, 0)
-        result_layout.addWidget(self.output_section)
-        result_container.setLayout(result_layout)
+        self.result_lbl = QLabel("0")
+        self.result_lbl.setFont(fnt(34, bold=True))
+        self.result_lbl.setStyleSheet(f"color: {C_TEXT}; background: transparent;")
+        self.result_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        main_layout.addWidget(header)
-        main_layout.addWidget(self.input_section)
-        main_layout.addWidget(result_container)
+        d_lay.addWidget(self.expr_lbl)
+        d_lay.addWidget(self.result_lbl)
+        root.addWidget(display)
+        root.addSpacing(12)
 
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        grid = QGridLayout()
+        grid.setSpacing(6)
 
-        # Connect buttons
-        self.input_section.submit_btn.clicked.connect(
-            lambda: self.input_section.submit_reg(self.output_section)
-        )
-        self.input_section.clear_btn.clicked.connect(
-            lambda: self.input_section.clear_form(self.output_section)
-        )
+        buttons = [
+            [("%", self._pct),    ("CE", self._ce),       ("C", self._clear),    ("<-", self._backspace)],
+            [("1/x", self._reciprocal), ("x^2", self._square), ("sqrt(x)", self._sqrt), ("/", lambda: self._op("/"))],
+            [("7", lambda: self._digit("7")), ("8", lambda: self._digit("8")), ("9", lambda: self._digit("9")), ("x", lambda: self._op("*"))],
+            [("4", lambda: self._digit("4")), ("5", lambda: self._digit("5")), ("6", lambda: self._digit("6")), ("-", lambda: self._op("-"))],
+            [("1", lambda: self._digit("1")), ("2", lambda: self._digit("2")), ("3", lambda: self._digit("3")), ("+", lambda: self._op("+"))],
+            [("+/-", self._negate), ("0", lambda: self._digit("0")), (".", lambda: self._digit(".")), ("=", self._evaluate)],
+        ]
 
+        for r, row in enumerate(buttons):
+            for c, (label, action) in enumerate(row):
+                btn = make_btn(label)
+                btn.clicked.connect(action)
+                grid.addWidget(btn, r, c)
 
-class InputSection(QWidget):
-    def __init__(self):
-        super().__init__()
+        root.addLayout(grid)
 
-        layout = QGridLayout()
-        layout.setContentsMargins(20, 15, 20, 15)
-
-        layout.addWidget(QLabel("BMI age group:"), 0, 0)
-        self.age_combo = QComboBox()
-        self.age_combo.addItems([adult, child])
-        layout.addWidget(self.age_combo, 0, 1, 1, 2)
-
-        layout.addWidget(QLabel("Weight:"), 1, 0)
-        self.weight_input = QLineEdit()
-        layout.addWidget(self.weight_input, 1, 1)
-
-        self.weight_unit = QComboBox()
-        self.weight_unit.addItems([kg, lb])
-        layout.addWidget(self.weight_unit, 1, 2)
-
-        layout.addWidget(QLabel("Height:"), 2, 0)
-        self.height_input = QLineEdit()
-        layout.addWidget(self.height_input, 2, 1)
-
-        self.height_unit = QComboBox()
-        self.height_unit.addItems([cm, inch])
-        layout.addWidget(self.height_unit, 2, 2)
-
-        self.clear_btn = QPushButton("Clear")
-        self.submit_btn = QPushButton("Submit Registration")
-
-        layout.addWidget(self.clear_btn, 3, 1)
-        layout.addWidget(self.submit_btn, 3, 2)
-
-        self.setLayout(layout)
-
-    def clear_form(self, output_section):
-        self.weight_input.clear()
-        self.height_input.clear()
-        output_section.clear_result()
-
-    def submit_reg(self, output_section):
-        bmi = self.calculate_BMI()
-        if bmi is not None:
-            output_section.update_results(bmi, self.age_combo.currentText())
-
-    def calculate_BMI(self):
-        try:
-            weight = float(self.weight_input.text())
-            height = float(self.height_input.text())
-
-            if self.weight_unit.currentText() == lb:
-                weight *= 0.453592
-
-            if self.height_unit.currentText() == inch:
-                height *= 2.54
-
-            height_m = height / 100
-            bmi = weight / (height_m ** 2)
-
-            return round(bmi, 2)
-        except:
-            return None
-
-
-class OutputSection(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.layout = QVBoxLayout()
-        self.layout.setAlignment(Qt.AlignTop)
-        self.layout.setContentsMargins(20, 20, 20, 20)
-
-        self.result_title = QLabel("Your BMI")
-        self.result_title.setAlignment(Qt.AlignCenter)
-
-        self.result_label = QLabel("0.00")
-        self.result_label.setFont(QFont("Arial", 30, QFont.Bold))
-        self.result_label.setStyleSheet("color: blue;")
-        self.result_label.setAlignment(Qt.AlignCenter)
-
-        self.layout.addWidget(self.result_title)
-        self.layout.addWidget(self.result_label)
-        self.layout.addSpacing(20)
-
-        self.setLayout(self.layout)
-
-    def show_adult_table(self):
-        table = QLabel(
-            "BMI\t\tCondition\n"
-            "< 18.5\t\tThin\n"
-            "18.5 - 25.0\tNormal\n"
-            "25.1 - 30.0\tOverweight\n"
-            "> 30.0\t\tObese"
-        )
-        table.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(table)
-
-    def show_child_link(self):
-        info = QLabel(
-            "For child's BMI interpretation, please click one of the following links."
-        )
-        info.setAlignment(Qt.AlignCenter)
-
-        boy_link = QLabel(
-            '<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-boys-z-5-19years.pdf">BMI graph for BOYS</a>'
-        )
-
-        girl_link = QLabel(
-            '<a href="https://cdn.who.int/media/docs/default-source/child-growth/growth-reference-5-19-years/bmi-for-age-(5-19-years)/cht-bmifa-girls-z-5-19years.pdf">BMI graph for GIRLS</a>'
-        )
-
-        boy_link.setOpenExternalLinks(True)
-        girl_link.setOpenExternalLinks(True)
-
-        boy_link.setAlignment(Qt.AlignCenter)
-        girl_link.setAlignment(Qt.AlignCenter)
-
-        self.layout.addWidget(info)
-        self.layout.addSpacing(5)
-        self.layout.addWidget(boy_link)
-        self.layout.addWidget(girl_link)
-
-    def update_results(self, bmi, age_group):
-        self.clear_result()
-        self.result_label.setText(f"{bmi:.2f}")
-
-        if age_group == adult:
-            self.show_adult_table()
+    def _update(self):
+        self.expr_lbl.setText(self._expr)
+        if self._expr:
+            try:
+                val = eval(self._expr)
+                self.result_lbl.setText(self._fmt(val))
+            except Exception:
+                self.result_lbl.setText(self._expr[-1] if self._expr else "0")
         else:
-            self.show_child_link()
+            self.result_lbl.setText("0")
 
-    def clear_result(self):
-        while self.layout.count() > 3:
-            item = self.layout.takeAt(3)
-            if item.widget():
-                item.widget().deleteLater()
+    def _fmt(self, val):
+        if isinstance(val, float):
+            if val == int(val):
+                return str(int(val))
+            return f"{val:.10g}"
+        return str(val)
 
-        self.result_label.setText("0.00")
+    def _current_val(self):
+        try:
+            return float(eval(self._expr)) if self._expr else 0.0
+        except Exception:
+            return 0.0
 
+    def _digit(self, d):
+        if self._just_evaluated:
+            self._expr = ""
+            self._just_evaluated = False
+        self._expr += d
+        self._update()
 
-def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    def _op(self, op):
+        self._just_evaluated = False
+        self._expr += op
+        self._update()
 
+    def _backspace(self):
+        self._expr = self._expr[:-1]
+        self._update()
+
+    def _ce(self):
+        self._expr = re.sub(r'[\d.]+$', '', self._expr)
+        self._update()
+
+    def _clear(self):
+        self._expr = ""
+        self._just_evaluated = False
+        self.expr_lbl.setText("")
+        self.result_lbl.setText("0")
+
+    def _pct(self):
+        try:
+            val = self._current_val()
+            result = val / 100
+            self.expr_lbl.setText(f"{self._expr}%")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except Exception:
+            self.result_lbl.setText("Error")
+
+    def _negate(self):
+        try:
+            val = self._current_val()
+            result = -val
+            self.expr_lbl.setText(f"negate({self._expr})")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except Exception:
+            self.result_lbl.setText("Error")
+
+    def _reciprocal(self):
+        try:
+            val = self._current_val()
+            if val == 0:
+                self.result_lbl.setText("Cannot divide by zero")
+                return
+            result = 1 / val
+            self.expr_lbl.setText(f"1/({self._expr})")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except Exception:
+            self.result_lbl.setText("Error")
+
+    def _square(self):
+        try:
+            val = self._current_val()
+            result = val ** 2
+            self.expr_lbl.setText(f"({self._expr})^2")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except Exception:
+            self.result_lbl.setText("Error")
+
+    def _sqrt(self):
+        try:
+            val = self._current_val()
+            if val < 0:
+                self.result_lbl.setText("Invalid input")
+                return
+            result = math.sqrt(val)
+            self.expr_lbl.setText(f"sqrt({self._expr})")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except Exception:
+            self.result_lbl.setText("Error")
+
+    def _evaluate(self):
+        if not self._expr:
+            return
+        try:
+            result = eval(self._expr)
+            self.expr_lbl.setText(self._expr + " =")
+            self._expr = self._fmt(result)
+            self.result_lbl.setText(self._expr)
+            self._just_evaluated = True
+        except ZeroDivisionError:
+            self.result_lbl.setText("Cannot divide by zero")
+            self._expr = ""
+        except Exception:
+            self.result_lbl.setText("Error")
+            self._expr = ""
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    app.setApplicationName("Calculator")
+    app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    w = Calculator()
+    w.show()
+    sys.exit(app.exec())

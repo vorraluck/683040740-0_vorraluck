@@ -1,3 +1,6 @@
+#Vorraluck Taladon
+#683040740-0
+
 import sys
 import os
 from PySide6.QtWidgets import (

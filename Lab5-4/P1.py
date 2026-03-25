@@ -1,3 +1,6 @@
+#Vorraluck Taladon
+#683040740-0
+
 ## For Master ##
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QFormLayout,
